@@ -1,0 +1,258 @@
+C51 COMPILER V9.01   KÐÍÈÈµçÅ¼MAX6675²_Î_³ÌÐò                                              01/25/2013 13:39:57 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE KÐÍÈÈµçÅ¼MAX6675²_Î_³ÌÐò
+OBJECT MODULE PLACED IN KÐÍÈÈµçÅ¼MAX6675²âÎÂ³ÌÐò.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE KÐÍÈÈµçÅ¼MAX6675²âÎÂ³ÌÐò.c DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /********************************************************************
+   2          ¿ª·¢»·¾³£ºKeil
+   3          µ¥Æ¬»ú£ºAT89S52-24PU  ¾§Õñ£º12 MZ 
+   4          ³ÌÐòÃèÊö£º KÐÍÈÈµçÅ¼+MAX6675£¬LCD1602 ÏÔÊ¾  
+   5          designed by YING 
+   6          2012-08-29 21:16   Íê³É
+   7          ×¢£º1£º±¾³ÌÐòÃ»ÓÐ×÷¶ÏÅ¼¼ì²â£¬Çë¸ù¾ÝÊµ¼ÊÇé¿ö²Î¿¼DATASHEET ±àÐ´
+   8              2£º±¾³ÌÐòÖ»¹©Ñ§Ï°²Î¿¼Ö®ÓÃ£¬ÇëÎðÓÃÓÚÆäËüÓÃÍ¾£¡£¡²Î¿¼Çë×ÔÐÐÑéÖ¤³ÌÐòÕýÈ·ÐÔ¼°¿É¿¿ÐÔ£¡£¡£¡
+   9          **************************¶¨ÒåÍ·ÎÄ¼þ*****************************************/
+  10          #include <reg51.h>
+  11          #include<intrins.h>
+  12          /*******************************************************************/
+  13          //lcd part
+  14          #define  LINE1     0
+  15          #define  LINE2     1
+  16          #define  LINE1_HEAD    0x80
+  17          #define  LINE2_HEAD    0xC0
+  18          #define  LCD_DELAY_TIME   40
+  19          #define  DATA_MODE    0x38
+  20          #define  OPEN_SCREEN    0x0C
+  21          #define  DISPLAY_ADDRESS   0x80
+  22          #define  CLEARSCREEN    LCD_en_command(0x01)
+  23          #define  HIGH   1
+  24          #define  LOW    0
+  25          #define  TRUE    1
+  26          #define  FALSE    0
+  27          #define  ZERO    0 
+  28          #define  MSB    0x80
+  29          #define  LSB    0x01
+  30          /*******************************************************************/
+  31          #define  LCDIO     P1
+  32          sbit LCD1602_RS=P2^0;   //ÉèÖÃRS 
+  33          sbit LCD1602_RW=P2^1;   //ÉèÖÃRW
+  34          sbit LCD1602_EN=P2^2;   //ÉèÖÃE
+  35          sbit MAX6675_SO=P2^4;    
+  36          sbit MAX6675_SCK=P2^5;    
+  37          sbit MAX6675_CS=P2^6; 
+  38          unsigned char data disdata[5];
+  39          unsigned int Value;
+  40          /********************************************************************/
+  41          void LCD_delay(void);//LCDÑÓÊ±º¯Êý
+  42          void LCD_en_command(unsigned char command);//LCDÐ´Ö¸Áî
+  43          void LCD_en_dat(unsigned char temp);//LCDÐ´Êý¾Ý
+  44          void LCD_set_xy( unsigned char x, unsigned char y );//ÉèÖÃLCDÏÔÊ¾Î»ÖÃ
+  45          void LCD_write_char( unsigned x,unsigned char y,unsigned char dat);//ÏòLCDÐ´ÈëÒ»¸ö×Ö·û
+  46          void LCD_write_string(unsigned char X,unsigned char Y,unsigned char *s);//ÏòLCDÐ´ÈëÒ»´®×Ö·û
+  47          void LCD_init(void);//LCD³õÊ¼»¯º¯Êý
+  48          /********************************************************************/
+  49          void delay_nms(unsigned int n);//ÑÓÊ±º¯Êý
+  50          
+  51          /********************************************************************/
+  52          /***********************´ÓMAX6675¶ÁÈ¡ÎÂ¶È*********************************************/
+  53          unsigned int ReadMAX6675()   
+  54          {
+  55   1       unsigned char count;
+C51 COMPILER V9.01   KÐÍÈÈµçÅ¼MAX6675²_Î_³ÌÐò                                              01/25/2013 13:39:57 PAGE 2   
+
+  56   1       MAX6675_CS=1; //¹Ø±ÕMAX6675
+  57   1        //_nop_();
+  58   1       //  _nop_();
+  59   1       MAX6675_CS=0;//ÖÃµÍ£¬Ê¹ÄÜMAX6675
+  60   1       //_nop_();
+  61   1      
+  62   1       MAX6675_SCK=1;
+  63   1       Value=0;
+  64   1       //_nop_();
+  65   1       //_nop_();
+  66   1       for(count=16;count>0;count--) //»ñÈ¡16Î»MSB
+  67   1       {
+  68   2        MAX6675_SCK=0;  //sckÖÃµÍ
+  69   2        Value=Value<<1;     //×óÒÆ
+  70   2          if(MAX6675_SO==1) //È¡µ±Ç°Öµ
+  71   2         Value|=0x0001;
+  72   2        else
+  73   2         Value&=0xffff;
+  74   2        MAX6675_SCK=1;
+  75   2       //_nop_();
+  76   2        //_nop_();
+  77   2        //_nop_();
+  78   2       //_nop_();
+  79   2       }
+  80   1       MAX6675_CS=1;  //¹Ø±ÕMAX6675
+  81   1       return Value;
+  82   1      }
+  83          /***************************************************************************************/
+  84          /**************************ÎÂ¶ÈÖµÏÔÊ¾ **************************************************/
+  85          void tempdisp()  
+  86          { 
+  87   1        unsigned int temp;
+  88   1        unsigned int TempValue;
+  89   1       // unsigned int testD2;
+  90   1        unsigned int xiaoshu;
+  91   1        
+  92   1         TempValue=ReadMAX6675();//¶ÁÈ¡MAX6675 ×ª»»ºóµÄÎÂ¶ÈÊýÖµ£»   
+  93   1         TempValue=TempValue<<1;         //È¥µôµÚ15Î»
+  94   1       
+  95   1         TempValue=TempValue>>4;//È¥µôµÚ0~2Î»
+  96   1         xiaoshu=TempValue*10;
+  97   1         TempValue=TempValue/4;            //MAX6675×î´óÊýÖµÎª1023¡£75£¬¶øAD¾«¶ÈÎª12Î»£¬¼´2µÄ12´Î·½Îª4096£¬×ª»»¶ÔÓ¦Êý£
+             -¬¹ÊÒª³ý4£»
+  98   1         xiaoshu=xiaoshu/4;                   //ÓëÉÏÊöÍ¬Àí
+  99   1              if(TempValue>=1024)
+ 100   1              {TempValue=1024;}
+ 101   1              disdata[0]=(TempValue/1000)%10+0x30;//Ç§Î» +0x30ÊÇ¶ÔÓ¦LCDÀïµÄROM×Ö·ûÎ»ÖÃ±àÂë
+ 102   1          disdata[1]=(TempValue/100)%10+0x30;//°ÙÎ»  +0x30ÊÇ¶ÔÓ¦LCDÀïµÄROM×Ö·ûÎ»ÖÃ±àÂë
+ 103   1          disdata[2]=(TempValue/10)%10+0x30;//Ê®Î» +0x30ÊÇ¶ÔÓ¦LCDÀïµÄROM×Ö·ûÎ»ÖÃ±àÂë
+ 104   1          disdata[3]=(TempValue)%10+0x30;//¸öÎ»  +0x30ÊÇ¶ÔÓ¦LCDÀïµÄROM×Ö·ûÎ»ÖÃ±àÂë
+ 105   1          disdata[4]=xiaoshu%10+0x30;//·ÖÎ»    +0x30ÊÇ¶ÔÓ¦LCDÀïµÄROM×Ö·ûÎ»ÖÃ±àÂë  
+ 106   1      
+ 107   1              if(disdata[0]==0x30)
+ 108   1              {
+ 109   2                LCD_write_char(4,LINE2,0x20); //ÏÔÊ¾Ç§Î»      
+ 110   2                if(disdata[1]==0x30)
+ 111   2                  { LCD_write_char(5,LINE2,0x20);  
+ 112   3                        if(disdata[2]==0x30)
+ 113   3                     LCD_write_char(6,LINE2,0x20); 
+ 114   3                         else  LCD_write_char(6,LINE2,disdata[2]);     //ÏÔÊ¾Ê®Î»
+ 115   3                  }
+ 116   2                 else  
+C51 COMPILER V9.01   KÐÍÈÈµçÅ¼MAX6675²_Î_³ÌÐò                                              01/25/2013 13:39:57 PAGE 3   
+
+ 117   2                {    LCD_write_char(5,LINE2,disdata[1]); //ÏÔÊ¾°ÙÎ»
+ 118   3                     LCD_write_char(6,LINE2,disdata[2]);       //ÏÔÊ¾Ê®Î»
+ 119   3                }
+ 120   2               }         
+ 121   1               else  
+ 122   1               {
+ 123   2               LCD_write_char(4,LINE2,disdata[0]);    //ÏÔÊ¾Ç§Î»
+ 124   2               LCD_write_char(5,LINE2,disdata[1]);   //ÏÔÊ¾°ÙÎ»
+ 125   2               LCD_write_char(6,LINE2,disdata[2]);    //ÏÔÊ¾Ê®Î»
+ 126   2               }
+ 127   1               // LCD_write_char(6,LINE2,disdata[2]);  //ÏÔÊ¾Ê®Î»
+ 128   1               LCD_write_char(7,LINE2,disdata[3]);    //ÏÔÊ¾¸öÎ»
+ 129   1               LCD_write_char( 8,LINE2,0X2e);//ÏÔÊ¾"µã"
+ 130   1               LCD_write_char(9,LINE2,disdata[4]);    //ÏÔÊ¾·ÖÎ»
+ 131   1                LCD_write_char( 10,LINE2,0XDF);//ÏÔÊ¾"¶È"              
+ 132   1           LCD_write_char( 11,LINE2,0X43);//ÏÔÊ¾"C"
+ 133   1      
+ 134   1       
+ 135   1      }  
+*** WARNING C280 IN LINE 87 OF KÐÍÈÈµçÅ¼MAX6675²âÎÂ³ÌÐò.C: 'temp': unreferenced local variable
+ 136          /****************************Ö÷ ³Ì Ðò********************************************************/
+ 137          void main(void)
+ 138          {
+ 139   1       delay_nms(10);
+ 140   1       LCD_init();   //LCD³õÊ¼»¯
+ 141   1       delay_nms(50);
+ 142   1       CLEARSCREEN;   //ÇåÆÁ
+ 143   1       delay_nms(10);
+ 144   1       LCD_write_string(0,LINE1,"temperature TEST");
+ 145   1      
+ 146   1       while(TRUE )    
+ 147   1       {
+ 148   2           
+ 149   2              tempdisp();  
+ 150   2              delay_nms(220);              
+ 151   2       }
+ 152   1      }
+ 153          /********************************************************************/
+ 154          /******************** LCD º¯Êý²¿·Ý ***********************************/
+ 155          void LCD_delay(void)   
+ 156          {
+ 157   1       unsigned char i;
+ 158   1       for(i=LCD_DELAY_TIME;i>ZERO;i--)
+ 159   1         ;
+ 160   1      }
+ 161          /********************************************************************/  
+ 162          void LCD_en_command(unsigned char command)
+ 163          {
+ 164   1       LCD_delay();
+ 165   1       LCD1602_RS=LOW;   
+ 166   1       LCD1602_RW=LOW;
+ 167   1       LCD1602_EN=HIGH;
+ 168   1       LCDIO=command;
+ 169   1       LCD1602_EN=LOW;
+ 170   1      }
+ 171          /********************************************************************/
+ 172          void LCD_en_dat(unsigned char dat)
+ 173          {
+ 174   1       LCD_delay();
+ 175   1       LCD1602_RS=HIGH;
+ 176   1       LCD1602_RW=LOW;
+ 177   1       LCD1602_EN=HIGH;
+C51 COMPILER V9.01   KÐÍÈÈµçÅ¼MAX6675²_Î_³ÌÐò                                              01/25/2013 13:39:57 PAGE 4   
+
+ 178   1       LCDIO=dat;
+ 179   1       LCD1602_EN=LOW;
+ 180   1      }
+ 181          /********************************************************************/
+ 182          void LCD_set_xy( unsigned char x, unsigned char y )
+ 183          {
+ 184   1       unsigned char address;
+ 185   1       if (y == LINE1) 
+ 186   1        address = LINE1_HEAD + x;
+ 187   1       else 
+ 188   1           address = LINE2_HEAD + x;
+ 189   1       LCD_en_command(address); 
+ 190   1      }
+ 191          /********************************************************************/
+ 192          void LCD_write_char( unsigned x,unsigned char y,unsigned char dat)
+ 193          {
+ 194   1       LCD_set_xy( x, y ); 
+ 195   1       LCD_en_dat(dat);
+ 196   1      }
+ 197          /********************************************************************/
+ 198          void LCD_write_string(unsigned char X,unsigned char Y,unsigned char *s)
+ 199          {
+ 200   1          LCD_set_xy( X, Y );//ÉèÖÃÏÔÊ¾XYµØÖ· 
+ 201   1          while (*s)  // Ð´×Ö·û
+ 202   1          {
+ 203   2           LCDIO=*s;
+ 204   2              LCD_en_dat(*s);   
+ 205   2       s ++;
+ 206   2          }
+ 207   1      }
+ 208          /********************************************************************/
+ 209          void LCD_init(void)
+ 210          {  CLEARSCREEN;//clear screen 
+ 211   1       LCD_en_command(DATA_MODE);//8Î»Ä£Ê½
+ 212   1        LCD_en_command(DATA_MODE);
+ 213   1        LCD_en_command(DATA_MODE);
+ 214   1        LCD_en_command(DATA_MODE);
+ 215   1       LCD_en_command(OPEN_SCREEN);//¿ªÏÔÊ¾
+ 216   1       LCD_en_command(DISPLAY_ADDRESS);//Éè¶¨ÏÔÊ¾ÆðÊ¼Î» 
+ 217   1       CLEARSCREEN;//ÇåÆÁ
+ 218   1      }
+ 219          /********************************************************************/
+ 220          /***********************  ÑÓÊ± *********************************/
+ 221          void delay_nms(unsigned int n)      
+ 222          {
+ 223   1          unsigned int i=0,j=0;
+ 224   1          for (i=n;i>0;i--)
+ 225   1           for (j=0;j<1140;j++);  
+ 226   1      }
+ 227          /********************************************************************/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    572    ----
+   CONSTANT SIZE    =     17    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

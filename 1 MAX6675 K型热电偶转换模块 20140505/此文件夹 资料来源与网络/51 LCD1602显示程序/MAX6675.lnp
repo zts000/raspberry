@@ -1,0 +1,4 @@
+"K型热电偶MAX6675测温程序.obj" 
+TO "MAX6675" 
+RAMSIZE(256) 
+CODE( 0X0000-0X1FFF )

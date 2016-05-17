@@ -1,0 +1,12 @@
+接线方式：
+LCD1602接线   晶振使用12MHZ   单片机 STC89C52
+
+LCDIO   P1.0-P1.7   接 LCD D0-D7
+LCD1602_RS=P2^0;   //设置RS 
+LCD1602_RW=P2^1;   //设置RW
+LCD1602_EN=P2^2;   //设置E
+
+MAX6675 K热电偶模块接线
+MAX6675_SO=P2^4;    
+MAX6675_SCK=P2^5;    
+MAX6675_CS=P2^6; 
